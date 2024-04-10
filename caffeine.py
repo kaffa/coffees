@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+
 """
 ## 说明
 
@@ -84,6 +85,7 @@ import time
 import re
 import subprocess
 import shutil
+import threading
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -100,7 +102,7 @@ class Watcher:
         self.observer.start()
         try:
             while True:
-                time.sleep(3)
+                time.sleep(5)
         except:
             self.observer.stop()
             print("Error")
@@ -108,9 +110,17 @@ class Watcher:
         self.observer.join()
 
 
+def run(path):
+    shutil.copyfile(path, 'index.html')
+    subprocess.Popen(f'cmd /c "aio.cmd"', shell=True)
+
+
 class Handler(FileSystemEventHandler):
+    timer = None
+
     @staticmethod
     def on_any_event(event):
+        print(event.event_type)
         if event.is_directory:
             return None
 
@@ -118,13 +128,19 @@ class Handler(FileSystemEventHandler):
             # Take any action here when a file is first created.
             print("Received created event - %s." % event.src_path)
 
+        elif event.event_type == 'moved':
+            # Take any action here when a file is first created.
+            print("Received moved event - %s." % event.src_path)
+
         elif event.event_type == 'modified':
             # Taken any action here when a file is modified.
             print("Received modified event - %s." % event.src_path)
 
             if re.match(r"tiddlywiki( \([\d+]*?\))?\.html", event.src_path.split('\\').pop()):
-                shutil.copyfile(event.src_path, 'index.html')
-                subprocess.Popen(f'cmd /c "aio.cmd"', shell=True)
+                if Handler.timer:
+                    Handler.timer.cancel()
+                Handler.timer = threading.Timer(2, lambda: run(event.src_path))
+                Handler.timer.start()
 
 
 if __name__ == '__main__':
