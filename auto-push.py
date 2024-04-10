@@ -1,14 +1,15 @@
+import os
 import sys
 import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import re
 import subprocess
-
+import shutil
 
 
 class Watcher:
-    path = sys.argv[1] if len(sys.argv) > 1 else '.'
+    path = sys.argv[1] if len(sys.argv) > 1 else os.getenv('USERPROFILE') + '\\Downloads'
     
     def __init__(self):
         self.observer = Observer()
@@ -40,7 +41,9 @@ class Handler(FileSystemEventHandler):
         elif event.event_type == 'modified':
             # Taken any action here when a file is modified.
             print("Received modified event - %s." % event.src_path)
+
             if re.match(r"tiddlywiki \([\d+]*?\).html", event.src_path.split('\\').pop()):
+                shutil.copyfile(event.src_path, 'index.html')
                 subprocess.Popen(f'cmd /c "aio.cmd"', shell=True)
 
 
