@@ -1,4 +1,4 @@
-cd /d D:\code\github\kaffa\coffees
+cd /d D:\code\github\coffee.kaffa.im\coffees
 git add .
 git commit -am 'kaffa'
 git push
